@@ -10,6 +10,7 @@ class KickCommand {
     this.data = new SlashCommandBuilder()
       .setName("kick")
       .setDescription("Kick a user")
+      .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers)
       .addUserOption((option) =>
         option.setName("user").setDescription("User to kick").setRequired(true),
       )
@@ -25,43 +26,25 @@ class KickCommand {
    * @param {ChatInputCommandInteraction} interaction
    */
   async execute(interaction) {
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-    const targetmember = interaction.options.getMember("user");
-    const Reason =
-      interaction.options.getString("reason") ?? "No reason provided";
+    if (interaction.guild.members.me.permissions.has(PermissionFlagsBits.KickMembers)) {
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+      const targetmember = interaction.options.getMember("user");
+      const Reason = interaction.options.getString("reason") ?? "No reason provided";
 
-    if (!targetmember) {
-      await interaction.editRely({
-        content: "User does not exist ",
-        flags: MessageFlags.Ephemeral,
-      });
-    } else if (
-      !interaction.guild.members.me.permissions.has(
-        PermissionFlagsBits.KickMembers,
-      )
-    ) {
-      await interaction.editReply({
-        content: "I do not have permission to kick this user! ",
-        flags: MessageFlags.Ephemeral,
-      });
-    } else if (!targetmember.kickable) {
-      await interaction.editReply({
-        content: "User cannot be kicked",
-        flags: MessageFlags.Ephemeral,
-      });
-    } else if (
-      !interaction.member.permissions.has(PermissionFlagsBits.KickMembers)
-    ) {
-      await interaction.editReply({
-        content: "You do not have permission to kick this member! ",
-        flags: MessageFlags.Ephemeral,
-      });
-    }
+      if (!targetmember) {
+        await interaction.editRely({
+          content: "User does not exist ",
+          flags: MessageFlags.Ephemeral,
+        });
+      }
 
-    try {
-      await targetmember.kick({ Reason });
-    } catch (error) {
-        console.log(error)
+      try {
+        await targetmember.kick({ Reason });
+      } catch (error) {
+          console.log(error)
+      }
+    } else {
+      await interaction.editReply({ content: 'I do not have permission to execute this command', flags: MessageFlags.Ephemeral })
     }
   }
 }
