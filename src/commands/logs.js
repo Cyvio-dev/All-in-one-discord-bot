@@ -10,9 +10,13 @@ const {
   GuildExplicitContentFilter,
 } = require("discord.js");
 
-const client = new Client({
-  intents: [GatewayIntentBits.GuildModeration],
-});
+const { Pool } = require('pg');
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false
+    }
+})
 
 class LogsCommand {
   constructor() {
@@ -21,7 +25,7 @@ class LogsCommand {
       .setDescription("Set logs channel")
       .setDefaultMemberPermissions(PermissionFlagsBits.ViewAuditLog)
       .addChannelOption((option) =>
-        option.setName("channel").setRequired(true),
+        option.setName("channel").setDescription('Channel to set').setRequired(true),
       );
   }
 
@@ -31,6 +35,15 @@ class LogsCommand {
   async execute(interaction) {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const chnl = interaction.options.getChannel("channel");
+    const guild_id = interaction.guildId
+
+    const query = `
+    INSERT INTO guild_logs (guild_id, channel_id) 
+    VALUES($1, $2) 
+    ON CONFLICT (guild_id) 
+    DO UPDATE SET channel_id = EXCLUDED.channel_id`
+    await pool.query(query, [guild_id, chnl.id]);
+
     await interaction.editReply({
       content: `${chnl} has been set for audit logs`,
       flags: MessageFlags.Ephemeral,
@@ -38,34 +51,4 @@ class LogsCommand {
   }
 }
 
-client.on(Events.GuildAuditLogEntryCreate, async (auditlog) => {
-  const { action, executorId, targetId } = auditlog;
-  const executor = await client.users.fetch(executorId);
-  const target = await client.users.fetch(targetId);
-
-  try {
-    if (action === AuditLogEvent.MessageDelete) {
-      await chnl.send({
-        content: `Message by ${target.tag} was deleted by ${executor.tag}`,
-      });
-    } else if (action === AuditLogEvent.MemberKick) {
-      await chnl.send({
-        content: `${target.tag} was kicked by ${executor.tag}`,
-      });
-    } else if (action === AuditLogEvent.MemberBanAdd) {
-      await chnl.send({
-        content: `${target.tag} was banned by ${executor.tag}`,
-      });
-    } else if (action === AuditLogEvent.MemberBanRemove) {
-      await chnl.send({
-        content: `${target.tag} was unbanned by ${executor.tag}`,
-      });
-    } else if (action == AuditLogEvent.ChannelCreate) {
-      await chnl.send({
-        content: `${target.tag} was created by ${executor.tag}`,
-      });
-    }
-  } catch (error) {
-    console.log(error);
-  }
-});
+module.exports = new LogsCommand();
