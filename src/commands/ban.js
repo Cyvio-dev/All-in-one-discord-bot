@@ -26,8 +26,8 @@ class BanCommand {
    * @param {ChatInputCommandInteraction} interaction
    */
   async execute(interaction) {
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     if (interaction.guild.members.me.permissions.has(PermissionFlagsBits.BanMembers)) {
-      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
       const targetmember = interaction.options.getMember("user");
       const Reason =
         interaction.options.getString("reason") ?? "No reason provided";
@@ -42,7 +42,7 @@ class BanCommand {
       try {
         await targetmember.ban({ Reason });
       } catch (error) {
-          console.log(error);
+          await interaction.editReply({ content: 'I do not have permission to ban this member', flags: MessageFlags.Ephemeral });
       }
     } else {
       await interaction.editReply({ content: 'I do not have permission to execute this command', flags: MessageFlags.Ephemeral })

@@ -57,6 +57,11 @@ module.exports = (client, pool) => {
         await chnl.send({
           content: `${channelName} was created by ${executor.tag}`,
         });
+      } else if (action === AuditLogEvent.ChannelDelete) {
+        const channelName = target?.name || "A channel";
+        await chnl.send({
+          content: `${channelName} was deleted by ${executor.tag}`,
+        })
       }
     } catch (error) {
       console.log(error);

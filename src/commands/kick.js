@@ -26,8 +26,8 @@ class KickCommand {
    * @param {ChatInputCommandInteraction} interaction
    */
   async execute(interaction) {
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     if (interaction.guild.members.me.permissions.has(PermissionFlagsBits.KickMembers)) {
-      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
       const targetmember = interaction.options.getMember("user");
       const Reason = interaction.options.getString("reason") ?? "No reason provided";
 
@@ -41,7 +41,7 @@ class KickCommand {
       try {
         await targetmember.kick({ Reason });
       } catch (error) {
-          console.log(error)
+          await interaction.editReply({ content: 'I do not have permission to kick this member', flags: MessageFlags.Ephemeral })
       }
     } else {
       await interaction.editReply({ content: 'I do not have permission to execute this command', flags: MessageFlags.Ephemeral })

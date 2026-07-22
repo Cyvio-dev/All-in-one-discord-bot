@@ -22,8 +22,8 @@ class TicketCommand {
      * @param {ChatInputCommandInteraction} interaction 
      */
     async execute(interaction) {
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral })
         if (interaction.guild.members.me.permissions.has(PermissionFlagsBits.ManageChannels)) {
-            await interaction.deferReply({ flags: MessageFlags.Ephemeral })
             const chnl = interaction.options.getChannel('channel')
             const msg = interaction.options.getString('message')
 
